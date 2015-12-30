@@ -52,6 +52,7 @@ THIRD_PARTY_APPS = (
     'rest_framework',
     'rest_framework.authtoken',
     'django_markdown',
+    'post_office',
 )
 
 # Apps specific for this project go here.
@@ -99,7 +100,7 @@ FIXTURE_DIRS = []
 
 # EMAIL CONFIGURATION
 # ------------------------------------------------------------------------------
-EMAIL_BACKEND = env('DJANGO_EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_BACKEND = env('DJANGO_EMAIL_BACKEND', default='post_office.EmailBackend')
 
 # MANAGER CONFIGURATION
 # ------------------------------------------------------------------------------
