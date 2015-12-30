@@ -152,9 +152,11 @@ And assuming you have uWSGI configured `touch reload`
 Until we maybe decide on Celery for running various (timed or otherwise) tasks add the following to your crontab:
 
     SHELL=/bin/bash
-    @daily      cd /path/to/project ; source venv/bin/activate ; ./manage.py addrecurring
-    @daily      cd /path/to/project ; set -o allexport ; source .env; set +o allexport ; pg_dump -c $DATABASE_URL | gzip >database_backup.sql.gz
-    @daily      cd /path/to/project ; source venv/bin/activate ; ./manage.py import_holvidata # if using Holvi integrations
+    PROJECT=/path/to/project
+    */5 * * * *     cd $PROJECT ; source venv/bin/activate ; ./manage.py send_queued_mail --processes=1 >>$PROJECT/cron_mail.log 2>&1
+    @daily          cd $PROJECT ; source venv/bin/activate ; ./manage.py addrecurring
+    @daily          cd /path/to/project ; set -o allexport ; source .env; set +o allexport ; pg_dump -c $DATABASE_URL | gzip >database_backup.sql.gz
+    @monthly        cd $PROJECT ; source venv/bin/activate ; ./manage.py cleanup_mail --days=30 >>$PROJECT/cron_mail_cleanup.log 2>&1
 
 ## Running in development mode
 

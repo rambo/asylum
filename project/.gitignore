@@ -7,7 +7,7 @@ asylum/static/js/
 asylum/static/fonts/
 
 ## Local virtualenv ##
-venv/
+venv
 
 ### OSX ###
 .DS_Store
