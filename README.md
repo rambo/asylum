@@ -105,3 +105,8 @@ Until we maybe decide on Celery for running various (timed or otherwise) tasks a
   - `maildump -p ~/maildump.pid --stop`
 
 If you need the special environment variables in scripts not run via manage.py, use `set -o allexport ; source .env; set +o allexport` to load them.
+
+## About the example handlers
+
+Use these as example for building your own callbacks (though some might be rather useful as-is), you need to `pip install -r examples/requirements.txt` to install
+the additional requirements.
