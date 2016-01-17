@@ -37,8 +37,8 @@ SECURITY_MIDDLEWARE = (
 )
 RAVEN_MIDDLEWARE = ('raven.contrib.django.raven_compat.middleware.Sentry404CatchMiddleware',
                     'raven.contrib.django.raven_compat.middleware.SentryResponseErrorIdMiddleware',)
-MIDDLEWARE_CLASSES = SECURITY_MIDDLEWARE + \
-    RAVEN_MIDDLEWARE + MIDDLEWARE_CLASSES
+#MIDDLEWARE_CLASSES = SECURITY_MIDDLEWARE + \
+#    RAVEN_MIDDLEWARE + MIDDLEWARE_CLASSES
 
 
 # set this to 60 seconds and then to 518400 when you can prove it works
@@ -65,7 +65,7 @@ ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=['example.com'])
 # EMAIL
 # ------------------------------------------------------------------------------
 DEFAULT_FROM_EMAIL = env('DJANGO_DEFAULT_FROM_EMAIL',
-                         default='asylum <noreply@example.com>')
+                         default='asylum <noreply@lataamo.helsinki.hacklab.fi>')
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_SUBJECT_PREFIX = env("DJANGO_EMAIL_SUBJECT_PREFIX", default='[asylum] ')
 SERVER_EMAIL = env('DJANGO_SERVER_EMAIL', default=DEFAULT_FROM_EMAIL)
@@ -88,5 +88,22 @@ DATABASES['default'] = env.db("DATABASE_URL")
 
 # Custom Admin URL, use {% url 'admin:index' %}
 ADMIN_URL = env('DJANGO_ADMIN_URL')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': env('DJANGO_LOG_LEVEL', default='INFO'),
+        },
+    },
+}
+
 
 # Your production stuff: Below this line define 3rd party library settings
