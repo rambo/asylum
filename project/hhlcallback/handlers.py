@@ -85,6 +85,11 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
         # Only negative amounts go to invoices
         if t.amount >= 0.0:
             return True
+        if t.tag.pk == 1: # Membership feee
+            return self.make_membershipfee_invoice(rt, t)
+        return True
+
+    def make_membershipfee_invoice(self, rt, t):
         HOLVI_CNC = get_holvi_singleton()
         if not HOLVI_CNC:
             return True
