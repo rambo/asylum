@@ -81,6 +81,19 @@ For questions regarding your membership or this message, please contact the boar
 
 
 class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
+    category_maps = {}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        HOLVI_CNC = get_holvi_singleton()
+        if HOLVI_CNC:
+            import holviapi
+            caa = holviapi.CategoriesAPI(HOLVI_CNC)
+            self.category_maps = { # Keyed by tag pk
+                1: caa.get_category('101ea72cbfadf52d4f7684a52bdb8947'), # Membership feee
+                2: caa.get_category('7ac3020b14d926e5f0c6fb005f0457ac'), # Keyholder fee
+            }
+
     def on_creating(self, rt, t, *args, **kwargs):
         # Only negative amounts go to invoices
         if t.amount >= 0.0:
@@ -108,6 +121,7 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
             year = datetime.datetime.now().year
         invoice.items[0].description = "%s %s" % (t.tag.label, year)
         invoice.items[0].net = -t.amount # Negative amount transaction -> positive amount invoice
+        invoice.items[0].category = self.category_maps[1]
         invoice.subject = "%s / %s" % (invoice.items[0].description, invoice.receiver.name)
         invoice = invoice.save()
         invoice.send()
