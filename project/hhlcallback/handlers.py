@@ -8,6 +8,7 @@ from creditor.handlers import BaseTransactionHandler, BaseRecurringTransactionsH
 from creditor.models import Transaction, TransactionTag
 from django.utils.translation import ugettext_lazy as _
 from examples.utils import get_holvi_singleton
+from .utils import get_nordea_payment_reference
 
 logger = logging.getLogger('hhlcallback.handlers')
 env = environ.Env()
@@ -100,6 +101,8 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
             return True
         if t.tag.pk == 1: # Membership feee
             return self.make_membershipfee_invoice(rt, t)
+        if t.tag.pk == 2: # Keyholder feee
+            t.reference = get_nordea_payment_reference(t.owner.member_id, int(t.tag.tmatch))
         return True
 
     def make_membershipfee_invoice(self, rt, t):
