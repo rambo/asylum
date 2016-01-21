@@ -130,3 +130,67 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
         invoice.send()
         t.reference = invoice.rf_reference
         return True
+
+
+
+class TransactionHandler(BaseTransactionHandler):
+    def __init__(self, *args, **kwargs):
+        # We have to do this late to avoid problems with circular imports
+        from members.models import Member
+        self.memberclass = Member
+        self.try_methods = [
+            self.import_generic_transaction,
+            self.import_legacy_transaction,
+        ]
+        super().__init__(*args, **kwargs)
+
+    def import_transaction(self, at):
+        # We only care about transactions with reference numbers
+        if not at.reference:
+            return None
+
+        # If local transaction exists, return as-is
+        lt = at.get_local()
+        if lt.pk:
+            return lt
+
+        # We have few importers to try
+        for m in self.try_methods:
+            new_lt = m(at, lt)
+            if new_lt is not None:
+                return new_lt
+        # Nothing worked, return None
+        return None
+
+    def import_generic_transaction(self, at, lt):
+        """Look for a transaction with same reference but oppsite value. If found use that for owner and tag"""
+        qs = Transaction.objects.filter(reference=at.reference, amount=-at.amount).order_by('-stamp')
+        if not qs.count():
+            return None
+        base = qs[0]
+        lt.tag = base.tag
+        lt.owner = base.owner
+        lt.save()
+        return lt
+
+    def import_legacy_transaction(self, at, lt):
+        """Look at the reference number and use it to find owner and tag if it matches our old reference format"""
+        # Last meaningful number (last number is checksum) of the reference is used to recognize the TransactionTag
+        try:
+            lt.tag = TransactionTag.objects.get(tmatch=at.reference[-2])
+        except TransactionTag.DoesNotExist:
+            # No tag matched, skip...
+            return None
+        # Numbers up to the tag identifier in the reference is the member_id + 1000
+        try:
+            lt.owner = self.memberclass.objects.get(member_id=(int(at.reference[0:-2], 10)-1000))
+        except self.memberclass.DoesNotExist:
+            # No member matched, skip...
+            return None
+
+        # Rest of the fields are directly mapped already by get_local()
+        lt.save()
+        return lt
+
+    def __str__(self):
+        return str(_("Helsinki Hacklab ry transactions handler"))
