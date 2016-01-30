@@ -4,6 +4,26 @@ Membership management for hacklabs. uses Python 3.4.
 
 Uses django-environ for configurations, create `.env`-file in your project dir to override settings.
 
+## REST API
+
+Access to all asylum models is available via REST (authentication required for reading as well).
+
+Api root is https://yourserver.example.com/api/ and includes nice web-based API explorer, if
+your user has authentication token issued you can get that with:
+
+    curl -X POST --data 'username=YOU&password=YOURPASSWORD'  https://yourserver.example.com/api-auth/get-token/
+
+To use token auth include the standard `Authorization: Token YOURTOKEN` header, like so:
+
+    curl -X GET -H 'Authorization: Token YOURTOKEN' https://yourserver.example.com/api/members/types/
+
+Admins can issue auth tokens to users via https://yourserver.example.com/admin/authtoken/token/
+
+[DjangoFilterBackend][filterbacked] is enabled so you can use [Django lookup syntax][djangoqs] in GET parameters.
+
+[filterbacked]: http://www.django-rest-framework.org/api-guide/filtering/#djangofilterbackend
+[djangoqs]: https://docs.djangoproject.com/en/1.8/ref/models/querysets/#field-lookups
+
 ## Install/setup
 
 ### General
@@ -29,21 +49,26 @@ sudo apt-get install -y nodejs</code></pre>
       If the installation command fails, you'll have to bootstrap pip for your Python3.4 installation (`wget https://bootstrap.pypa.io/get-pip.py && sudo python3.4 get-pip.py`).
       Good luck.
   - `pip install -r requirements/local.txt` (or `pip install -r requirements/production.txt` if installing on production)
+  - Create the postgres database
+    - `sudo apt-get install postgresql-9.3` this is not in requirements.apt since you might want to use a dedicated postgres host.
+    - `sudo su - postgres`
+    - `createuser asylum && createdb -E utf-8 -T template0 -O asylum asylum && psql -U postgres -d postgres -c "alter user asylum with password 'asylum';"`
+      - Change at least the password,in createdb `-O asylum` is the user that owns the database.
   - `./manage.py migrate`
-  - `find . -name '._*' | xargs rm ; for app in locale */locale; do (cd $(dirname $app) && ../manage.py compilemessages ); done`
+  - `find . -name '._*' | xargs rm ; for app in $( find . -path '*/locale' ); do (cd $(dirname $app) && ../manage.py compilemessages ); done`
   - `./manage.py createinitialrevisions`
   - `./manage.py createsuperuser`
   - `npm run build`
-  - `./manage.py collectstatic --noinput`
 
 ### Production setup
 
-  - Create a `.env` file in the project directory, see the example file, you need at least the following variables
+  - Create a `.env` file in the project directory before running any of the manage.py commands above. See the example file, you need at least the following variables
       - DJANGO_SETTINGS_MODULE (=config.settings.production)
       - DJANGO_SENTRY_DSN
         - https://hub.docker.com/_/sentry/
         - https://docs.getsentry.com/hosted/
       - DATABASE_URL (=postgres://pguser:pgpassword@localhost/dbname)
+  - `./manage.py collectstatic --noinput`
   - Setup uWSGI
     - `sudo apt-get install uwsgi-plugin-python3 uwsgi`
     - `nano -w /etc/uwsgi/apps-available/asylum.ini` (see below)
@@ -93,7 +118,10 @@ And assuming you have uWSGI configured `touch reload`
 
 Until we maybe decide on Celery for running various (timed or otherwise) tasks add the following to your crontab:
 
+    SHELL=/bin/bash
     @daily      cd /path/to/project ; source venv/bin/activate ; ./manage.py addrecurring
+    @daily      cd /path/to/project ; set -o allexport ; source .env; set +o allexport ; pg_dump -c $DATABASE_URL | gzip >database_backup.sql.gz
+    @daily      cd /path/to/project ; source venv/bin/activate ; ./manage.py import_holvidata # if using Holvi integrations
 
 ## Running in development mode
 
@@ -103,10 +131,19 @@ Until we maybe decide on Celery for running various (timed or otherwise) tasks a
   - `npm run watch &` If you want to develop the JS/LESS stuff this will autocompile them on change
   - `./manage.py runserver 0.0.0.0:8000`
   - `maildump -p ~/maildump.pid --stop`
+  - Make localizations: `find . -name '._*' | xargs rm ; for app in $( find . -path '*/locale' ); do (cd $(dirname $app) && ../manage.py makemessages ); done`
+    - If you add your own apps, make sure to create the `locale` directory for them too.
 
 If you need the special environment variables in scripts not run via manage.py, use `set -o allexport ; source .env; set +o allexport` to load them.
 
+## Backups and direct database access
+
+See the cronjobs above for a nightly database dump. As for manual dump or restore start with  `set -o allexport ; source .env; set +o allexport` to load the environment.
+
+For a manual dump run ```pg_dump -c $DATABASE_URL | gzip >database_backup_`date +%Y%m%d_%H%M`.sql.gz```.
+
+For restore run ```zcat database_backup.sql.gz | psql $DATABASE_URL``` (you might need to drop and recreate the database first, see the setup instructions for creating)
+
 ## About the example handlers
 
-Use these as example for building your own callbacks (though some might be rather useful as-is), you need to `pip install -r examples/requirements.txt` to install
-the additional requirements.
+Use these as example for building your own callbacks (though some might be rather useful as-is).

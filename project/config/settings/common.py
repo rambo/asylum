@@ -24,6 +24,10 @@ env = environ.Env()
 if os.path.isfile(str(ROOT_DIR + '.env')):
     environ.Env.read_env(str(ROOT_DIR + '.env'))
 
+# Monkeypatch djangos own slugify with Mozilla teams Unicode-aware one
+import slugify as unicodeslugify
+import django.template.defaultfilters
+django.template.defaultfilters.slugify = lambda x: unicodeslugify.slugify(x, only_ascii=True, lower=True, spaces=False)
 
 # APP CONFIGURATION
 # ------------------------------------------------------------------------------
@@ -47,6 +51,7 @@ THIRD_PARTY_APPS = (
     'bootstrap3',
     'reversion',
     'rest_framework',
+    'rest_framework.authtoken',
     'django_markdown',
 )
 
@@ -58,6 +63,7 @@ LOCAL_APPS = (
     'access',
     'creditor',
     'ndaparser',
+    'holviapp',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -159,6 +165,7 @@ _TEMPLATE_CONTEXT_PROCESSORS = [
     'django.template.context_processors.tz',
     'django.contrib.messages.context_processors.messages',
     # Your stuff: custom template context processors go here
+    'django_settings_export.settings_export',
 ]
 
 TEMPLATES = [
@@ -245,7 +252,7 @@ AUTHENTICATION_BACKENDS = (
 
 
 # SLUGLIFIER
-AUTOSLUG_SLUGIFY_FUNCTION = 'slugify.slugify'
+AUTOSLUG_SLUGIFY_FUNCTION = 'django.template.defaultfilters.slugify'
 
 # Location of root django.contrib.admin URL, use {% url 'admin:index' %}
 ADMIN_URL = r'^admin/'
@@ -260,12 +267,20 @@ TRANSACTION_CALLBACKS_HANDLER=env('TRANSACTION_CALLBACKS_HANDLER', default=None)
 NORDEA_UPLOAD_ENABLED = env.bool('NORDEA_UPLOAD_ENABLED', default=False)
 RECURRINGTRANSACTIONS_CALLBACKS_HANDLER=env('RECURRINGTRANSACTIONS_CALLBACKS_HANDLER', default=None)
 
+ORGANIZATION_NAME=env('ORGANIZATION_NAME', default="hacklab.fi asylum for the inane")
+RECURRINGTRANSACTIONS_CALLBACKS_HANDLER=env('RECURRINGTRANSACTIONS_CALLBACKS_HANDLER', default=None)
+HOLVI_POOL=env('HOLVI_POOL', default=None)
+HOLVI_APIKEY=env('HOLVI_APIKEY', default=None)
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ],
     # Use Django's standard `django.contrib.auth` permissions,
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-        'rest_framework.permissions.DjangoModelPermissions'
+        'rest_framework.permissions.DjangoModelPermissions',
     ],
     'PAGE_SIZE': 50,
     'DEFAULT_FILTER_BACKENDS': [
@@ -274,3 +289,9 @@ REST_FRAMEWORK = {
 }
 
 MARKDOWN_EXTENSIONS = ['extra', 'CodeHilite']
+
+# Keep last as reminder
+SETTINGS_EXPORT = [
+    'ORGANIZATION_NAME',
+    'APPLICATION_RULES_URL',
+]
