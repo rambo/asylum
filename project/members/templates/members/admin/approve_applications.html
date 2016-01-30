@@ -1,0 +1,35 @@
+{% extends "admin/base_site.html" %}
+{% load i18n l10n admin_urls %}
+
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a> &rsaquo;
+        <a href="{% url 'admin:app_list' app_label %}">{{app_label|capfirst|escape}}</a> &rsaquo;
+        <a href="{% url opts|admin_urlname:'changelist' %}">{{opts.verbose_name_plural|capfirst}}</a> &rsaquo;
+        {% trans "Upload "%}
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div id="content-main">
+        <div class="module">
+            <p>
+                TODO: intro
+            </p>
+            <p>
+                TODO: List the members
+            </p>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <table>
+                {{ form.as_table }}
+                </table>
+                <div class="actions_row">
+                    <input type="submit" class="btn btn-primary" value="{% trans "Approve" %}" />
+                    <a  class="btn btn-default" href="{% url opts|admin_urlname:'changelist' %}">{% trans "Cancel" %}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

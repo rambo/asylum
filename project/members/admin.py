@@ -9,9 +9,16 @@ from django.db import models
 from django.utils.functional import allow_lazy, lazy
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
+from django.db import models
+from django.http import HttpResponseRedirect
+from django import forms
 from reversion.admin import VersionAdmin
-
-from .models import Member, MemberNote, MembershipApplication, MembershipApplicationTag, MemberType
+from .models import MemberType, Member, MembershipApplication, MembershipApplicationTag, MemberNote
+from access.models import Token, Grant, AccessType
+from creditor.models import RecurringTransaction
+from django.utils.functional import lazy, allow_lazy
+from django.contrib.contenttypes.models import ContentType
+from .views import AdminApplicationApproveMixin
 
 
 class MemberTypeAdmin(VersionAdmin):
@@ -148,13 +155,14 @@ class TagListFilter(admin.SimpleListFilter):
         return queryset.filter(tags=v)
 
 
-class MembershipApplicationAdmin(VersionAdmin):
+class MembershipApplicationAdmin(AdminApplicationApproveMixin, VersionAdmin):
     list_display = (
         'rname',
         'email',
         'nick',
         'tags_formatted',
     )
+    actions = ['approve_selected']
     list_filter = (TagListFilter,)
     search_fields = ['lname', 'fname', 'email', 'nick']
 
@@ -162,6 +170,10 @@ class MembershipApplicationAdmin(VersionAdmin):
         return ', '.join((x.label for x in obj.tags.all()))
     tags_formatted.short_description = _("Tags")
 
+    def approve_selected(modeladmin, request, queryset):
+        selected = request.POST.getlist(admin.ACTION_CHECKBOX_NAME)
+        ct = ContentType.objects.get_for_model(queryset.model)
+        return HttpResponseRedirect("approve/?ct=%s&ids=%s" % (ct.pk, ",".join(selected)))
 
 class MembershipApplicationTagAdmin(VersionAdmin):
     pass
