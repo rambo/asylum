@@ -1,13 +1,16 @@
+# -*- coding: utf-8 -*-
+import calendar
+import datetime
 import logging
+
 import environ
-import datetime, calendar
 import holviapi
+from creditor.handlers import BaseRecurringTransactionsHandler, BaseTransactionHandler
+from creditor.models import RecurringTransaction, Transaction, TransactionTag
 from django.core.mail import EmailMessage
-from members.handlers import BaseApplicationHandler, BaseMemberHandler
-from creditor.handlers import BaseTransactionHandler, BaseRecurringTransactionsHandler
-from creditor.models import Transaction, TransactionTag, RecurringTransaction
 from django.utils.translation import ugettext_lazy as _
 from holviapp.utils import api_configured, get_invoiceapi
+from members.handlers import BaseApplicationHandler, BaseMemberHandler
 
 logger = logging.getLogger('example.handlers')
 env = environ.Env()
@@ -15,13 +18,14 @@ env = environ.Env()
 
 
 class ExampleBaseHandler(BaseMemberHandler):
+
     def on_saving(self, instance, *args, **kwargs):
-        msg = "on_saving called for %s %s" % (type(instance) , instance)
+        msg = "on_saving called for %s %s" % (type(instance), instance)
         logger.info(msg)
         print(msg)
 
     def on_saved(self, instance, *args, **kwargs):
-        msg = "on_saved called for %s %s" % (type(instance) , instance)
+        msg = "on_saved called for %s %s" % (type(instance), instance)
         logger.info(msg)
         print(msg)
 
@@ -31,6 +35,7 @@ class MemberHandler(ExampleBaseHandler):
 
 
 class ApplicationHandler(ExampleBaseHandler):
+
     def on_approving(self, application, member):
         msg = "on_approving called for %s" % application
         logger.info(msg)
@@ -41,7 +46,7 @@ class ApplicationHandler(ExampleBaseHandler):
         logger.info(msg)
         print(msg)
         mail = EmailMessage()
-        mail.to = [ member.email, ]
+        mail.to = [member.email, ]
         mail.body = """Your membership has been approved, your member id is #%d""" % member.member_id
         mail.send()
         # Auto-add the membership fee as recurring transaction
@@ -73,7 +78,7 @@ class ApplicationHandler(ExampleBaseHandler):
             rt.rtype = RecurringTransaction.YEARLY
             # If application was received in Q4 set the recurringtransaction to start from next year
             if application.received.month >= 10:
-                rt.start = datetime.date(year=application.received.year+1, month=1, day=1)
+                rt.start = datetime.date(year=application.received.year + 1, month=1, day=1)
             rt.save()
             rt.conditional_add_transaction()
 
@@ -81,14 +86,14 @@ class ApplicationHandler(ExampleBaseHandler):
         if mailman_subscribe:
             mail = EmailMessage()
             mail.from_email = member.email
-            mail.to = [ mailman_subscribe, ]
+            mail.to = [mailman_subscribe, ]
             mail.subject = 'subscribe'
             mail.body = 'subscribe'
             mail.send()
 
 
-
 class TransactionHandler(BaseTransactionHandler):
+
     def __init__(self, *args, **kwargs):
         # We have to do this late to avoid problems with circular imports
         from members.models import Member
@@ -206,8 +211,10 @@ class TransactionHandler(BaseTransactionHandler):
 
 
 class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
+
     def on_creating(self, rt, t, *args, **kwargs):
-        import holviapi, holviapi.utils
+        import holviapi
+        import holviapi.utils
         msg = "on_creating called for %s (from %s)" % (t, rt)
         logger.info(msg)
         print(msg)
@@ -242,9 +249,9 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
         else:
             invoice.items[0].description = "%s %02d/%d" % (t.tag.label, month, year)
 
-        invoice.items[0].net = -t.amount # Negative amount transaction -> positive amount invoice
+        invoice.items[0].net = -t.amount  # Negative amount transaction -> positive amount invoice
         if t.tag.holvi_code:
-            invoice.items[0].category = holviapi.IncomeCategory(invoice.api.categories_api, { 'code': t.tag.holvi_code }) # Lazy-loading category, avoids a GET
+            invoice.items[0].category = holviapi.IncomeCategory(invoice.api.categories_api, {'code': t.tag.holvi_code})  # Lazy-loading category, avoids a GET
         invoice.subject = "%s / %s" % (invoice.items[0].description, invoice.receiver.name)
 
         invoice = invoice.save()
