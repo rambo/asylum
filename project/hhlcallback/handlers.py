@@ -14,6 +14,26 @@ logger = logging.getLogger('hhlcallback.handlers')
 env = environ.Env()
 
 class ApplicationHandler(BaseApplicationHandler):
+    fresh_emails = {}
+
+    def on_saving(self, instance, *args, **kwargs):
+        """Called just before passing control to save()"""
+        if not instance.pk:
+            self.fresh_emails[instance.email] = True
+
+    def on_saved(self, instance, *args, **kwargs):
+        """Called after save() returns"""
+        if instance.email in self.fresh_emails:
+            # Just created
+            del(self.fresh_emails[instance.email])
+            mail = EmailMessage()
+            mail.from_email = '"%s" <%s>' % (instance.name, instance.email)
+            mail.to = [ "hallitus@helsinki.hacklab.fi", ]
+            mail.subject = "Jäsenhakemus"
+            mail.body = "Uusi hakemus Asylumissa: https://lataamo.hacklab.fi/admin/members/membershipapplication/%d/" % instance.pk
+            mail.send()
+        pass
+
     def on_approved(self, application, member):
         # Welcome-email
         rest_of_year_free = False
