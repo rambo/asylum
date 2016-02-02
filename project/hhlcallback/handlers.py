@@ -34,7 +34,7 @@ class ApplicationHandler(BaseApplicationHandler):
             mail = EmailMessage()
             mail.from_email = '"%s" <%s>' % (instance.name, instance.email)
             mail.to = ["hallitus@helsinki.hacklab.fi", ]
-            mail.subject = "Jäsenhakemus"
+            mail.subject = "Jäsenhakemus: %s" % instance.name
             mail.body = "Uusi hakemus Asylumissa: https://lataamo.hacklab.fi/admin/members/membershipapplication/%d/" % instance.pk
             mail.send()
         pass
