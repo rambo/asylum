@@ -1,17 +1,22 @@
-import environ
+# -*- coding: utf-8 -*-
+import calendar
+import datetime
 import logging
-import datetime, calendar
-from django.utils import timezone
-from django.core.mail import EmailMessage
-from members.handlers import BaseApplicationHandler, BaseMemberHandler
-from creditor.handlers import BaseTransactionHandler, BaseRecurringTransactionsHandler
+
+import environ
+from creditor.handlers import BaseRecurringTransactionsHandler, BaseTransactionHandler
 from creditor.models import Transaction, TransactionTag
+from django.core.mail import EmailMessage
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from examples.utils import get_holvi_singleton
+from members.handlers import BaseApplicationHandler, BaseMemberHandler
+
 from .utils import get_nordea_payment_reference
 
 logger = logging.getLogger('hhlcallback.handlers')
 env = environ.Env()
+
 
 class ApplicationHandler(BaseApplicationHandler):
     fresh_emails = {}
@@ -28,7 +33,7 @@ class ApplicationHandler(BaseApplicationHandler):
             del(self.fresh_emails[instance.email])
             mail = EmailMessage()
             mail.from_email = '"%s" <%s>' % (instance.name, instance.email)
-            mail.to = [ "hallitus@helsinki.hacklab.fi", ]
+            mail.to = ["hallitus@helsinki.hacklab.fi", ]
             mail.subject = "Jäsenhakemus"
             mail.body = "Uusi hakemus Asylumissa: https://lataamo.hacklab.fi/admin/members/membershipapplication/%d/" % instance.pk
             mail.send()
@@ -45,7 +50,7 @@ class ApplicationHandler(BaseApplicationHandler):
             fee_msg_fi = "Vuoden %s jäsenmaksua ei peritä." % application.received.year
             fee_msg_en = "Membership fee for year %s has been waived." % application.received.year
         mail = EmailMessage()
-        mail.to = [ member.email, ]
+        mail.to = [member.email, ]
         mail.from_email = "hallitus@helsinki.hacklab.fi"
         mail.subject = "Helsinki Hacklabin jäsenhakemus hyväksytty! | Your membership application has been approved!"
         mail.body = """Tervetuloa Helsinki Hacklabin jäseneksi!
@@ -78,7 +83,7 @@ For questions regarding your membership or this message, please contact the boar
         if mailman_subscribe:
             mail = EmailMessage()
             mail.from_email = member.email
-            mail.to = [ mailman_subscribe, ]
+            mail.to = [mailman_subscribe, ]
             mail.subject = 'subscribe'
             mail.body = 'subscribe'
             mail.send()
@@ -95,10 +100,9 @@ For questions regarding your membership or this message, please contact the boar
             rt.rtype = RecurringTransaction.YEARLY
             # If application was received in Q4 set the recurringtransaction to start from next year
             if rest_of_year_free:
-                rt.start = datetime.date(year=application.received.year+1, month=1, day=1)
+                rt.start = datetime.date(year=application.received.year + 1, month=1, day=1)
             rt.save()
             rt.conditional_add_transaction()
-
 
 
 class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
@@ -110,18 +114,18 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
         if HOLVI_CNC:
             import holviapi
             caa = holviapi.CategoriesAPI(HOLVI_CNC)
-            self.category_maps = { # Keyed by tag pk
-                1: caa.get_category('101ea72cbfadf52d4f7684a52bdb8947'), # Membership feee
-                2: caa.get_category('7ac3020b14d926e5f0c6fb005f0457ac'), # Keyholder fee
+            self.category_maps = {  # Keyed by tag pk
+                1: caa.get_category('101ea72cbfadf52d4f7684a52bdb8947'),  # Membership feee
+                2: caa.get_category('7ac3020b14d926e5f0c6fb005f0457ac'),  # Keyholder fee
             }
 
     def on_creating(self, rt, t, *args, **kwargs):
         # Only negative amounts go to invoices
         if t.amount >= 0.0:
             return True
-        if t.tag.pk == 1: # Membership feee
+        if t.tag.pk == 1:  # Membership feee
             return self.make_membershipfee_invoice(rt, t)
-        if t.tag.pk == 2: # Keyholder feee
+        if t.tag.pk == 2:  # Keyholder feee
             t.reference = get_nordea_payment_reference(t.owner.member_id, int(t.tag.tmatch))
         return True
 
@@ -143,7 +147,7 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
         else:
             year = datetime.datetime.now().year
         invoice.items[0].description = "%s %s" % (t.tag.label, year)
-        invoice.items[0].net = -t.amount # Negative amount transaction -> positive amount invoice
+        invoice.items[0].net = -t.amount  # Negative amount transaction -> positive amount invoice
         invoice.items[0].category = self.category_maps[1]
         invoice.subject = "%s / %s" % (invoice.items[0].description, invoice.receiver.name)
         invoice = invoice.save()
@@ -152,8 +156,8 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
         return True
 
 
-
 class TransactionHandler(BaseTransactionHandler):
+
     def __init__(self, *args, **kwargs):
         # We have to do this late to avoid problems with circular imports
         from members.models import Member
@@ -203,7 +207,7 @@ class TransactionHandler(BaseTransactionHandler):
             return None
         # Numbers up to the tag identifier in the reference is the member_id + 1000
         try:
-            lt.owner = self.memberclass.objects.get(member_id=(int(at.reference[0:-2], 10)-1000))
+            lt.owner = self.memberclass.objects.get(member_id=(int(at.reference[0:-2], 10) - 1000))
         except self.memberclass.DoesNotExist:
             # No member matched, skip...
             return None
