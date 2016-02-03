@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from django.core.management.base import BaseCommand, CommandError
 from creditor.tests.fixtures.transactions import TransactionFactory
+from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
@@ -12,4 +12,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for i in range(options['amount']):
             trans = TransactionFactory()
-            print("Generated transaction %s" % trans)
+            if options['verbosity'] > 0:
+                print("Generated transaction %s" % trans)

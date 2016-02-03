@@ -1,40 +1,50 @@
 # -*- coding: utf-8 -*-
-import datetime, pytz
-import os, codecs
+import codecs
+import datetime
+import os
 import random
-from django.core.validators import validate_email
+
+import factory.django
+import factory.fuzzy
+import pytz
 from django.core.exceptions import ValidationError
-import factory.django, factory.fuzzy
-from members.models import generate_unique_memberid, MemberType, MembershipApplicationTag
+from django.core.validators import validate_email
+from django.template.defaultfilters import slugify
+from members.models import MembershipApplicationTag, MemberType, generate_unique_memberid
+
 from asylum.utils import get_random_objects
+
 from . import types
 
 DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
 # PONDER: Move under asylym ? these are used by other apps too
 # TODO: convert to generators so we do not take the filesystem performance hit at import time
-lastnames = [x.rstrip() for x in codecs.open(os.path.join(DATA_PATH, 'lastnames'), 'r' ,'utf-8').readlines()]
+lastnames = [x.rstrip() for x in codecs.open(os.path.join(DATA_PATH, 'lastnames'), 'r', 'utf-8').readlines()]
 firstnames = [
     x.rstrip() for x in
-    codecs.open(os.path.join(DATA_PATH, 'males'), 'r' ,'utf-8').readlines() +
-    codecs.open(os.path.join(DATA_PATH, 'females'), 'r' ,'utf-8').readlines()
+    codecs.open(os.path.join(DATA_PATH, 'males'), 'r', 'utf-8').readlines() +
+    codecs.open(os.path.join(DATA_PATH, 'females'), 'r', 'utf-8').readlines()
 ]
 cities = ['Helsinki', 'Turku', 'Jyväskylä', 'Mikkeli', 'Pori', 'Kuopio', 'Tampere', 'Oulu', 'Joensuu', 'Vaasa']
 
 # This is also used by other apps
+
+
 def generate_email(memberlike):
     try:
         addr = '%s.%s@hacklab.hax' % (
-            memberlike.fname.encode('ascii','ignore').decode('utf-8').lower(),
-            memberlike.lname.encode('ascii','ignore').decode('utf-8').lower()
+            slugify(memberlike.fname),
+            slugify(memberlike.lname)
         )
         validate_email(addr)
         return addr
     except ValidationError as e:
-        return 'member_%d@hacklab.hax' % generate_unique_memberid()
+        return 'member_%d_%d@hacklab.hax' % (generate_unique_memberid(), random.randint(10, 2 ** 16))
 
 
 class MemberlikeFactoryBase(factory.django.DjangoModelFactory):
+
     class Meta:
         model = None
         django_get_or_create = ('fname', 'lname', 'email', 'city')
@@ -45,10 +55,11 @@ class MemberlikeFactoryBase(factory.django.DjangoModelFactory):
 
 
 class MemberFactory(MemberlikeFactoryBase):
+
     class Meta:
         model = 'members.Member'
         django_get_or_create = ('fname', 'lname', 'email', 'city')
-    accepted = factory.fuzzy.FuzzyDateTime(datetime.datetime.now(pytz.utc)-datetime.timedelta(weeks=5*52))
+    accepted = factory.fuzzy.FuzzyDateTime(datetime.datetime.now(pytz.utc) - datetime.timedelta(weeks=5 * 52))
 
     @factory.post_generation
     def mtypes(self, create, extracted, **kwargs):
@@ -64,10 +75,11 @@ class MemberFactory(MemberlikeFactoryBase):
 
 
 class MembershipApplicationFactory(MemberlikeFactoryBase):
+
     class Meta:
         model = 'members.MembershipApplication'
         django_get_or_create = ('fname', 'lname', 'email', 'city')
-    received = factory.fuzzy.FuzzyDateTime(datetime.datetime.now(pytz.utc)-datetime.timedelta(days=80))
+    received = factory.fuzzy.FuzzyDateTime(datetime.datetime.now(pytz.utc) - datetime.timedelta(days=80))
 
     @factory.post_generation
     def tags(self, create, extracted, **kwargs):

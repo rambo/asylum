@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from django.core.management.base import BaseCommand, CommandError
 from access.tests.fixtures.tokens import TokenFactory
+from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
@@ -12,4 +12,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for i in range(options['amount']):
             token = TokenFactory()
-            print("Generated token %s" % token)
+            if options['verbosity'] > 0:
+                print("Generated token %s" % token)
