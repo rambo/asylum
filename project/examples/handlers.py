@@ -16,7 +16,6 @@ logger = logging.getLogger('example.handlers')
 env = environ.Env()
 
 
-
 class ExampleBaseHandler(BaseMemberHandler):
 
     def on_saving(self, instance, *args, **kwargs):
@@ -61,10 +60,9 @@ class ApplicationHandler(ExampleBaseHandler):
             rt.rtype = RecurringTransaction.YEARLY
             # If application was received in Q4 set the recurringtransaction to start from next year
             if application.received.month >= 10:
-                rt.start = datetime.date(year=application.received.year+1, month=1, day=1)
+                rt.start = datetime.date(year=application.received.year + 1, month=1, day=1)
             rt.save()
             rt.conditional_add_transaction()
-
 
         # Auto-add the membership fee as recurring transaction
         membership_fee = env.float('MEMBEREXAMPLE_MEMBERSHIP_FEE', default=None)

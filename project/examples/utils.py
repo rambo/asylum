@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import environ
+
 env = environ.Env()
 HOLVI_CNC = False
+
 
 def get_holvi_singleton():
     global HOLVI_CNC
