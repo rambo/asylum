@@ -137,7 +137,7 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
         import holviapi
         invoice_api = holviapi.InvoiceAPI(HOLVI_CNC)
         invoice = holviapi.Invoice(invoice_api)
-        invoice.receiver = holviapi.contacts.InvoiceContact(**{
+        invoice.receiver = holviapi.contacts.InvoiceContact({
             'email': t.owner.email,
             'name': t.owner.name,
         })
