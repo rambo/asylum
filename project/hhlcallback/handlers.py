@@ -200,6 +200,8 @@ class TransactionHandler(BaseTransactionHandler):
     def import_legacy_transaction(self, at, lt):
         """Look at the reference number and use it to find owner and tag if it matches our old reference format"""
         # Last meaningful number (last number is checksum) of the reference is used to recognize the TransactionTag
+        if at.reference[0:2] == "RF":
+            return None
         try:
             lt.tag = TransactionTag.objects.get(tmatch=at.reference[-2])
         except TransactionTag.DoesNotExist:
