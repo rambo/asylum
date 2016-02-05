@@ -40,6 +40,32 @@ class ApplicationHandler(BaseApplicationHandler):
         pass
 
     def on_approved(self, application, member):
+        # Auto-add the membership fee as recurring transaction
+        membership_fee = env.float('HHL_MEMBERSHIP_FEE', default=None)
+        membership_tag = 1
+        if membership_fee and membership_tag:
+            from creditor.models import RecurringTransaction, TransactionTag
+            rt = RecurringTransaction()
+            rt.tag = TransactionTag.objects.get(pk=membership_tag)
+            rt.owner = member
+            rt.amount = -membership_fee
+            rt.rtype = RecurringTransaction.YEARLY
+            # If application was received in Q4 set the recurringtransaction to start from next year
+            if rest_of_year_free:
+                rt.start = datetime.date(year=application.received.year + 1, month=1, day=1)
+            rt.save()
+            rt.conditional_add_transaction()
+
+        # Subscribe to mailing list
+        mailman_subscribe = env('HHL_MAILMAN_SUBSCRIBE', default=None)
+        if mailman_subscribe:
+            mail = EmailMessage()
+            mail.from_email = member.email
+            mail.to = [mailman_subscribe, ]
+            mail.subject = 'subscribe'
+            mail.body = 'subscribe'
+            mail.send()
+
         # Welcome-email
         rest_of_year_free = False
         fee_msg_fi = "Jäsenmaksusta tulee sinulle erillinen viesti."
@@ -78,31 +104,6 @@ For questions regarding your membership or this message, please contact the boar
 """.format(fee_msg_fi=fee_msg_fi, fee_msg_en=fee_msg_en)
         mail.send()
 
-        # Subscribe to mailing list
-        mailman_subscribe = env('HHL_MAILMAN_SUBSCRIBE', default=None)
-        if mailman_subscribe:
-            mail = EmailMessage()
-            mail.from_email = member.email
-            mail.to = [mailman_subscribe, ]
-            mail.subject = 'subscribe'
-            mail.body = 'subscribe'
-            mail.send()
-
-        # Auto-add the membership fee as recurring transaction
-        membership_fee = env.float('HHL_MEMBERSHIP_FEE', default=None)
-        membership_tag = 1
-        if membership_fee and membership_tag:
-            from creditor.models import RecurringTransaction, TransactionTag
-            rt = RecurringTransaction()
-            rt.tag = TransactionTag.objects.get(pk=membership_tag)
-            rt.owner = member
-            rt.amount = -membership_fee
-            rt.rtype = RecurringTransaction.YEARLY
-            # If application was received in Q4 set the recurringtransaction to start from next year
-            if rest_of_year_free:
-                rt.start = datetime.date(year=application.received.year + 1, month=1, day=1)
-            rt.save()
-            rt.conditional_add_transaction()
 
 
 class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
