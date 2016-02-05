@@ -40,6 +40,15 @@ class ApplicationHandler(BaseApplicationHandler):
         pass
 
     def on_approved(self, application, member):
+        rest_of_year_free = False
+        fee_msg_fi = "Jäsenmaksusta tulee sinulle erillinen viesti."
+        fee_msg_en = "You will receive a separate message about membership fee."
+        # If application was received in Q4, rest of this year is free
+        if application.received.month >= 10:
+            rest_of_year_free = True
+            fee_msg_fi = "Vuoden %s jäsenmaksua ei peritä." % application.received.year
+            fee_msg_en = "Membership fee for year %s has been waived." % application.received.year
+
         # Auto-add the membership fee as recurring transaction
         membership_fee = env.float('HHL_MEMBERSHIP_FEE', default=None)
         membership_tag = 1
@@ -67,14 +76,6 @@ class ApplicationHandler(BaseApplicationHandler):
             mail.send()
 
         # Welcome-email
-        rest_of_year_free = False
-        fee_msg_fi = "Jäsenmaksusta tulee sinulle erillinen viesti."
-        fee_msg_en = "You will receive a separate message about membership fee."
-        # If application was received in Q4, rest of this year is free
-        if application.received.month >= 10:
-            rest_of_year_free = True
-            fee_msg_fi = "Vuoden %s jäsenmaksua ei peritä." % application.received.year
-            fee_msg_en = "Membership fee for year %s has been waived." % application.received.year
         mail = EmailMessage()
         mail.to = [member.email, ]
         mail.from_email = "hallitus@helsinki.hacklab.fi"
@@ -201,6 +202,8 @@ class TransactionHandler(BaseTransactionHandler):
     def import_legacy_transaction(self, at, lt):
         """Look at the reference number and use it to find owner and tag if it matches our old reference format"""
         # Last meaningful number (last number is checksum) of the reference is used to recognize the TransactionTag
+        if len(at.reference) < 2: # Jus so we do not get indexerrors from empty references or something
+            return None
         if at.reference[0:2] == "RF":
             return None
         try:
