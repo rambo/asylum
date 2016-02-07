@@ -40,7 +40,6 @@ class ApplicationHandler(BaseApplicationHandler):
         pass
 
     def on_approved(self, application, member):
-        # Welcome-email
         rest_of_year_free = False
         fee_msg_fi = "Jäsenmaksusta tulee sinulle erillinen viesti."
         fee_msg_en = "You will receive a separate message about membership fee."
@@ -49,6 +48,34 @@ class ApplicationHandler(BaseApplicationHandler):
             rest_of_year_free = True
             fee_msg_fi = "Vuoden %s jäsenmaksua ei peritä." % application.received.year
             fee_msg_en = "Membership fee for year %s has been waived." % application.received.year
+
+        # Auto-add the membership fee as recurring transaction
+        membership_fee = env.float('HHL_MEMBERSHIP_FEE', default=None)
+        membership_tag = 1
+        if membership_fee and membership_tag:
+            from creditor.models import RecurringTransaction, TransactionTag
+            rt = RecurringTransaction()
+            rt.tag = TransactionTag.objects.get(pk=membership_tag)
+            rt.owner = member
+            rt.amount = -membership_fee
+            rt.rtype = RecurringTransaction.YEARLY
+            # If application was received in Q4 set the recurringtransaction to start from next year
+            if rest_of_year_free:
+                rt.start = datetime.date(year=application.received.year + 1, month=1, day=1)
+            rt.save()
+            rt.conditional_add_transaction()
+
+        # Subscribe to mailing list
+        mailman_subscribe = env('HHL_MAILMAN_SUBSCRIBE', default=None)
+        if mailman_subscribe:
+            mail = EmailMessage()
+            mail.from_email = member.email
+            mail.to = [mailman_subscribe, ]
+            mail.subject = 'subscribe'
+            mail.body = 'subscribe'
+            mail.send()
+
+        # Welcome-email
         mail = EmailMessage()
         mail.to = [member.email, ]
         mail.from_email = "hallitus@helsinki.hacklab.fi"
@@ -78,31 +105,6 @@ For questions regarding your membership or this message, please contact the boar
 """.format(fee_msg_fi=fee_msg_fi, fee_msg_en=fee_msg_en)
         mail.send()
 
-        # Subscribe to mailing list
-        mailman_subscribe = env('HHL_MAILMAN_SUBSCRIBE', default=None)
-        if mailman_subscribe:
-            mail = EmailMessage()
-            mail.from_email = member.email
-            mail.to = [mailman_subscribe, ]
-            mail.subject = 'subscribe'
-            mail.body = 'subscribe'
-            mail.send()
-
-        # Auto-add the membership fee as recurring transaction
-        membership_fee = env.float('HHL_MEMBERSHIP_FEE', default=None)
-        membership_tag = 1
-        if membership_fee and membership_tag:
-            from creditor.models import RecurringTransaction, TransactionTag
-            rt = RecurringTransaction()
-            rt.tag = TransactionTag.objects.get(pk=membership_tag)
-            rt.owner = member
-            rt.amount = -membership_fee
-            rt.rtype = RecurringTransaction.YEARLY
-            # If application was received in Q4 set the recurringtransaction to start from next year
-            if rest_of_year_free:
-                rt.start = datetime.date(year=application.received.year + 1, month=1, day=1)
-            rt.save()
-            rt.conditional_add_transaction()
 
 
 class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
@@ -200,6 +202,8 @@ class TransactionHandler(BaseTransactionHandler):
     def import_legacy_transaction(self, at, lt):
         """Look at the reference number and use it to find owner and tag if it matches our old reference format"""
         # Last meaningful number (last number is checksum) of the reference is used to recognize the TransactionTag
+        if len(at.reference) < 2: # Jus so we do not get indexerrors from empty references or something
+            return None
         if at.reference[0:2] == "RF":
             return None
         try:
