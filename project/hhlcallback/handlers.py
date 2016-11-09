@@ -84,7 +84,7 @@ class ApplicationHandler(BaseApplicationHandler):
 
 Jäsenenä olet tervetullut kaikkiin Helsinki Hacklabin tilaisuuksiin, kuten tiistaisiin jäseniltoihin, torstaisiin kurssipäiviin, sekä muihin järjestettäviin tapahtumiin.
 
-Sähköisesti hacklabilaisten kanssa voi keskustella Suomen hacklabien foorumilla (https://discourse.hacklab.fi/), sekä IRC kanavallamme #helsinkihacklab Freenode-verkossa.
+Sähköisesti hacklabilaisten kanssa voi keskustella Suomen hacklabien foorumilla (https://discourse.hacklab.fi/), sekä IRC kanavallamme #helsinki.hacklab.fi Freenode-verkossa.
 
 {fee_msg_fi}
 
@@ -96,7 +96,7 @@ Helsinki Hacklab welcomes you as a member!
 
 As a member you are most welcome to attend all events organised by Helsinki Hacklab. These include the weekly member gathering every Tuesday, our courses and workshops held on Thurdays and other events we might come up with.
 
-Electronic communication between our members is handled forum of finnish hacklabs (https://discourse.hacklab.fi/) and on our IRC channel #helsinkihacklab @ Freenode.
+Electronic communication between our members is handled forum of finnish hacklabs (https://discourse.hacklab.fi/) and on our IRC channel #helsinki.hacklab.fi @ Freenode.
 
 {fee_msg_en}
 
