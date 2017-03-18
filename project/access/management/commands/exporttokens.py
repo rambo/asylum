@@ -17,6 +17,9 @@ class Command(BaseCommand):
         self.connection = sqlite3.connect(options['filepath'], detect_types=sqlite3.PARSE_DECLTYPES)
         self.cursor = self.connection.cursor()
 
+        self.cursor.execute("DROP TABLE IF EXISTS valid_tokens;")
+        self.cursor.execute("DROP TABLE IF EXISTS revoked_tokens;")
+
         self.cursor.execute("CREATE TABLE valid_tokens (value TEXT UNIQUE, type INTEGER, acl INTEGER, external_ids TEXT);")
         self.cursor.execute("CREATE TABLE revoked_tokens (value TEXT UNIQUE, type INTEGER);")
         self.connection.commit()
