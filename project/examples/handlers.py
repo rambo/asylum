@@ -44,25 +44,6 @@ class ApplicationHandler(ExampleBaseHandler):
         msg = "on_approved called for %s" % application
         logger.info(msg)
         print(msg)
-        mail = EmailMessage()
-        mail.to = [member.email, ]
-        mail.body = """Your membership has been approved, your member id is #%d""" % member.member_id
-        mail.send()
-        # Auto-add the membership fee as recurring transaction
-        membership_fee = env.float('MEMBEREXAMPLE_MEMBERSHIP_FEE', default=None)
-        membership_tag = env.int('MEMBEREXAMPLE_MEMBERSHIP_TAG_PK', default=None)
-        if membership_fee and membership_tag:
-            from creditor.models import RecurringTransaction, TransactionTag
-            rt = RecurringTransaction()
-            rt.tag = TransactionTag.objects.get(pk=membership_tag)
-            rt.owner = member
-            rt.amount = -membership_fee
-            rt.rtype = RecurringTransaction.YEARLY
-            # If application was received in Q4 set the recurringtransaction to start from next year
-            if application.received.month >= 10:
-                rt.start = datetime.date(year=application.received.year + 1, month=1, day=1)
-            rt.save()
-            rt.conditional_add_transaction()
 
         # Auto-add the membership fee as recurring transaction
         membership_fee = env.float('MEMBEREXAMPLE_MEMBERSHIP_FEE', default=None)
@@ -88,6 +69,11 @@ class ApplicationHandler(ExampleBaseHandler):
             mail.subject = 'subscribe'
             mail.body = 'subscribe'
             mail.send()
+
+        mail = EmailMessage()
+        mail.to = [member.email, ]
+        mail.body = """Your membership has been approved, your member id is #%d""" % member.member_id
+        mail.send()
 
 
 class TransactionHandler(BaseTransactionHandler):
@@ -181,6 +167,10 @@ class TransactionHandler(BaseTransactionHandler):
         return lt
 
     def import_tmatch_transaction(self, at, lt):
+        if len(at.reference) < 2: # To avoid indexerrors
+            return None
+        if at.reference[0:2] == "RF": # ISO references, our lookup won't work with them, even worse: there will be exceptions
+            return None
         # In  this example the last meaningful number (last number is checksum) of the reference is used to recognize the TransactionTag
         try:
             lt.tag = TransactionTag.objects.get(tmatch=at.reference[-2])
