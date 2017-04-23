@@ -19,6 +19,7 @@ class Command(BaseCommand):
 
         self.cursor.execute("DROP TABLE IF EXISTS valid_tokens;")
         self.cursor.execute("DROP TABLE IF EXISTS revoked_tokens;")
+        self.connection.commit()
 
         self.cursor.execute("CREATE TABLE valid_tokens (value TEXT UNIQUE, type INTEGER, acl INTEGER, external_ids TEXT);")
         self.cursor.execute("CREATE TABLE revoked_tokens (value TEXT UNIQUE, type INTEGER);")
