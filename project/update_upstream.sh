@@ -1,9 +1,10 @@
-#!/bin/bash
+#!/bin/bash -e
+git-up
 git checkout master
 git fetch upstream
 git rebase upstream/master master
 git checkout hhl_changes
-git rebase master
+git merge master
 source venv/bin/activate
 pip install -r requirements/production.txt
 ./manage.py migrate
