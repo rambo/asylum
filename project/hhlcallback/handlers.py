@@ -148,13 +148,57 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
         mail = EmailMessage()
         mail.to = [member.email, ]
         mail.from_email = "hallitus@helsinki.hacklab.fi"
-        mail.subject = "Avainjäsenen maksutiedot"
+        mail.subject = "Avainjäsenen maksutiedot | Keyholder membership payment info"
         mail.body = """
-Tilille {iban} viitteellä {ref} {sum}EUR
+(In English below)
 
-Virtuaaliviivakoodi: {barcode}
+Tässä avainjäsenyyden maksutietosi Helsinki Hacklab ry:lle. Vuosijäsenmaksut ovat eri asia ja maksetaan eri viitteellä eri tilille.
 
-Laita maksu toistuvaksi vaikka saatkin maksutiedot kuukausittain
+Virtuaaliviivakoodi sisältää kaikki maksua koskevat tiedot, ja se on suositeltavin tapa syöttää maksutiedot oikein 
+verkkopankkiisi. Muista tehdä maksusta kuukausittain toistuva. Verkkopankissa on jossain "lue viivakoodi" -tyyppinen nappi,
+paina siitä ja kopioi viivakoodin numerosarja annettuun kenttään.
+
+Virtuaaliviivakoodisi:
+{barcode}
+
+
+Maksaminen manuaalisesti tiedot syöttämällä.
+
+Ole huolellinen maksutietojen syöttämisessä, jos et käytä virtuaaliviivakoodia. Yhdistyksellä on kaksi eri tilinumeroa. 
+Ole hyvä, ja varmista, että maksut siirtyvät Nordea-tilillemme viitteen kanssa. Jätä maksun viestikenttä tyhjäksi.
+
+Tilinumero: {iban}
+Viitenumerosi: {ref}
+Maksun summa: {sum}EUR
+Eräpäivä: valitse päivämäärä esimerkiksi kuukauden alkupuolelta (suositus)
+Toistuvuus: joka kuukausi
+
+Nämä maksutiedot ovat toistaiseksi voimassa ja niitä koskevat muutokset ilmoitetaan erikseen.
+
+----
+
+This is the payment information for your keyholder membership at Helsinki Hacklab ry. Yearly membership fees are handled
+separately, with different reference and different account.
+
+Virtual barcode (usable with Finnish banks) contains all the information required to make a payment and is 
+the recommended way to input the payment information. Remember to make the payment repeat monthly. In the netbank there
+should be "read barcode" (or similar) button, copy the barcode numbers to the dialog given after clicking the button.
+
+Virtual barcode:
+{barcode}
+
+Manual input of payment information.
+
+Pay extra attention when entering payment info manually. Helsinki Hacklab has two different accounts, please make sure
+you are using our Nordea account and the correct reference number. Leave the message-field empty.
+
+Account number: {iban}
+Reference number: {ref}
+Amount due: {sum}EUR
+Due date: Choose a date that suits you, preferably early in the first half of the month.
+Repeat payment: Monthly
+
+This payment information is valid until further notice, you will be send notification of changes.
         """.format(
             iban=iban,
             ref=t.reference,
