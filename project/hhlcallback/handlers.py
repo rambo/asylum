@@ -131,8 +131,18 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
             return self.send_keyholder_fee_email(rt, t)
         return True
 
+    def is_first_keyholder_email(self, rt, t):
+        # If we have positive amounts paid with this reference and amount, then is not the first mail.
+        if Transaction.objects.filter(owner=t.owner, amount=-t.amount, reference=t.reference).count():
+            return False
+        return True
+
     def send_keyholder_fee_email(self, rt, t):
         t.reference = get_nordea_payment_reference(t.owner.member_id, int(t.tag.tmatch))
+        # Skip sending if this is not the first transaction with this sum
+        if not self.is_first_keyholder_email(rt,t):
+            return True
+
         iban = env('NORDEA_BARCODE_IBAN')
         member = t.owner
         mail = EmailMessage()
