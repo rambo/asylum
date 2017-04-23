@@ -10,6 +10,7 @@ from django.core.mail import EmailMessage
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from examples.utils import get_holvi_singleton
+from holviapi.utils import barcode as bank_barcode
 from members.handlers import BaseApplicationHandler, BaseMemberHandler
 
 from .utils import get_nordea_payment_reference
@@ -106,7 +107,6 @@ For questions regarding your membership or this message, please contact the boar
         mail.send()
 
 
-
 class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
     category_maps = {}
 
@@ -128,7 +128,88 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
         if t.tag.pk == 1:  # Membership feee
             return self.make_membershipfee_invoice(rt, t)
         if t.tag.pk == 2:  # Keyholder feee
-            t.reference = get_nordea_payment_reference(t.owner.member_id, int(t.tag.tmatch))
+            return self.send_keyholder_fee_email(rt, t)
+        return True
+
+    def is_first_keyholder_email(self, rt, t):
+        # If we have positive amounts paid with this reference and amount, then is not the first mail.
+        if Transaction.objects.filter(owner=t.owner, amount=-t.amount, reference=t.reference).count():
+            return False
+        return True
+
+    def send_keyholder_fee_email(self, rt, t):
+        t.reference = get_nordea_payment_reference(t.owner.member_id, int(t.tag.tmatch))
+        # Skip sending if this is not the first transaction with this sum
+        if not self.is_first_keyholder_email(rt,t):
+            return True
+
+        iban = env('NORDEA_BARCODE_IBAN')
+        member = t.owner
+        mail = EmailMessage()
+        mail.to = [member.email, ]
+        mail.from_email = "hallitus@helsinki.hacklab.fi"
+        mail.subject = "Avainjäsenen maksutiedot | Keyholder membership payment info"
+        mail.body = """
+(In English below)
+
+Tässä avainjäsenyyden maksutietosi Helsinki Hacklab ry:lle. Vuosijäsenmaksut ovat eri asia ja maksetaan eri viitteellä eri tilille.
+
+Virtuaaliviivakoodi sisältää kaikki maksua koskevat tiedot, ja se on suositeltavin tapa syöttää maksutiedot oikein 
+verkkopankkiisi. Muista tehdä maksusta kuukausittain toistuva. Verkkopankissa on jossain "lue viivakoodi" -tyyppinen nappi,
+paina siitä ja kopioi viivakoodin numerosarja annettuun kenttään.
+
+Virtuaaliviivakoodisi:
+{barcode}
+
+
+Maksaminen manuaalisesti tiedot syöttämällä.
+
+Ole huolellinen maksutietojen syöttämisessä, jos et käytä virtuaaliviivakoodia. Yhdistyksellä on kaksi eri tilinumeroa. 
+Ole hyvä, ja varmista, että maksut siirtyvät Nordea-tilillemme viitteen kanssa. Jätä maksun viestikenttä tyhjäksi.
+
+Tilinumero: {iban}
+Viitenumerosi: {ref}
+Maksun summa: {sum}EUR
+Eräpäivä: valitse päivämäärä esimerkiksi kuukauden alkupuolelta (suositus)
+Toistuvuus: joka kuukausi
+
+Nämä maksutiedot ovat toistaiseksi voimassa ja niitä koskevat muutokset ilmoitetaan erikseen.
+
+----
+
+This is the payment information for your keyholder membership at Helsinki Hacklab ry. Yearly membership fees are handled
+separately, with different reference and different account.
+
+Virtual barcode (usable with Finnish banks) contains all the information required to make a payment and is 
+the recommended way to input the payment information. Remember to make the payment repeat monthly. In the netbank there
+should be "read barcode" (or similar) button, copy the barcode numbers to the dialog given after clicking the button.
+
+Virtual barcode:
+{barcode}
+
+Manual input of payment information.
+
+Pay extra attention when entering payment info manually. Helsinki Hacklab has two different accounts, please make sure
+you are using our Nordea account and the correct reference number. Leave the message-field empty.
+
+Account number: {iban}
+Reference number: {ref}
+Amount due: {sum}EUR
+Due date: Choose a date that suits you, preferably early in the first half of the month.
+Repeat payment: Monthly
+
+This payment information is valid until further notice, you will be send notification of changes.
+        """.format(
+            iban=iban,
+            ref=t.reference,
+            sum=-t.amount,
+            barcode=bank_barcode(iban, t.reference, -t.amount)
+        )
+        try:
+            mail.send()
+        except Exception as e:
+            logger.exception("Failed to send payment-info email to {}".format(member.email))
+
         return True
 
     def make_membershipfee_invoice(self, rt, t):
@@ -202,7 +283,7 @@ class TransactionHandler(BaseTransactionHandler):
     def import_legacy_transaction(self, at, lt):
         """Look at the reference number and use it to find owner and tag if it matches our old reference format"""
         # Last meaningful number (last number is checksum) of the reference is used to recognize the TransactionTag
-        if len(at.reference) < 2: # Jus so we do not get indexerrors from empty references or something
+        if len(at.reference) < 2:  # Jus so we do not get indexerrors from empty references or something
             return None
         if at.reference[0:2] == "RF":
             return None
