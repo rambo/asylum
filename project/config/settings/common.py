@@ -65,6 +65,7 @@ LOCAL_APPS = (
     'ndaparser',
     'holviapp',
     'velkoja',
+    'slacksync',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
