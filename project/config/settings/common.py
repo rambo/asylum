@@ -65,6 +65,7 @@ LOCAL_APPS = (
     'ndaparser',
     'holviapp',
     'velkoja',
+    'slacksync',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -270,6 +271,8 @@ HOLVI_POOL = env('HOLVI_POOL', default=None)
 HOLVI_APIKEY = env('HOLVI_APIKEY', default=None)
 HOLVI_BARCODE_IBAN = env('HOLVI_BARCODE_IBAN', default=None)
 HOLVI_NOTIFICATION_INTERVAL_DAYS = env('HOLVI_NOTIFICATION_INTERVAL_DAYS', default=7)
+SLACK_APIKEY = env('SLACK_APIKEY', default=None)
+SLACK_API_USERNAME = env('SLACK_API_USERNAME', default=None)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
