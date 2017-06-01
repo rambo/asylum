@@ -9,6 +9,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--autodeactivate', action='store_true', help='Automatically deactivate users that are no longer members')
+        parser.add_argument('--noresend', action='store_true', help='Automatically deactivate users that are no longer members')
 
         pass
 
@@ -18,8 +19,11 @@ class Command(BaseCommand):
         autoremove = False
         if options['autodeactivate']:
             autoremove = True
+        resend = True
+        if options['noresend']:
+            resend = False
         sync = SlackMemberSync()
-        tbd = sync.sync_members(autoremove)
+        tbd = sync.sync_members(autoremove, )
         if options['verbosity'] > 1:
             for dm in tbd:
                 if autoremove:
