@@ -57,7 +57,7 @@ class SlackMemberSync(object):
                         wait_s = int(e.response.headers['Retry-After'])
                         logger.warning("Asked to wait {}s before retrying invite for {}".format(wait_s, member.email))
                         time.sleep(wait_s*1.5)
-                        add_members.appendleft(member)
+                        add_members.append(member)
                         continue
                     else:
                         logger.exception("Got exception when trying to invite {}".format(member.email))
@@ -89,7 +89,7 @@ class SlackMemberSync(object):
                         wait_s = int(e.response.headers['Retry-After'])
                         logger.warning("Asked to wait {}s before retrying deactivation for {}".format(wait_s, email))
                         time.sleep(wait_s*1.5)
-                        remove_iter.appendleft(email)
+                        remove_iter.append(email)
                         continue
                     else:
                         logger.exception("Got exception when trying to deactivate {}".format(email))
