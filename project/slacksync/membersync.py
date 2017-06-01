@@ -6,6 +6,8 @@ import time
 from django.conf import settings
 from members.models import Member
 from requests.sessions import Session
+from requests.exceptions import RequestException
+import slacker
 
 from .utils import api_configured, get_client
 
@@ -46,7 +48,11 @@ class SlackMemberSync(object):
                     if 'ok' not in resp.body or not resp.body['ok']:
                         self.logger.error("Could not invite {}, response: {}".format(member.email, resp.body))
                     time.sleep(0.25)  # rate-limit
-                except Exception as e:
+                except slacker.Error as e:
+                    if str(e) == 'sent_recently':
+                        continue
+                    raise e
+                except RequestException as e:
                     if 'Retry-After' in e.response.headers:
                         wait_s = int(e.response.headers['Retry-After'])
                         logger.warning("Asked to wait {}s before retrying invite for {}".format(wait_s, member.email))
@@ -78,7 +84,7 @@ class SlackMemberSync(object):
                     if 'ok' not in resp.body or not resp.body['ok']:
                         self.logger.error("Could not deactivate {}, response: {}".format(email, resp.body))
                     time.sleep(0.25)  # rate-limit
-                except Exception as e:
+                except RequestException as e:
                     if 'Retry-After' in e.response.headers:
                         wait_s = int(e.response.headers['Retry-After'])
                         logger.warning("Asked to wait {}s before retrying deactivation for {}".format(wait_s, email))

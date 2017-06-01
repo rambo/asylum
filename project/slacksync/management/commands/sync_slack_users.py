@@ -23,7 +23,7 @@ class Command(BaseCommand):
         if options['noresend']:
             resend = False
         sync = SlackMemberSync()
-        tbd = sync.sync_members(autoremove, )
+        tbd = sync.sync_members(autoremove, resend)
         if options['verbosity'] > 1:
             for dm in tbd:
                 if autoremove:
