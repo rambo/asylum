@@ -39,7 +39,7 @@ class SlackMemberSync(object):
             slack_emails = set([x[2] for x in slack_users])
             add_members = collections.deque(Member.objects.exclude(email__in=slack_emails))
 
-            while add_members.count():
+            while add_members:
                 member = add_members.popleft()
                 try:
                     resp = slack.users.admin.invite(member.email, resend=resend)
@@ -71,7 +71,7 @@ class SlackMemberSync(object):
 
             userids_by_email = {x[2]: x[0] for x in slack_users}
             remove_iter = collections.deque(remove_slack_emails)
-            while remove_iter.count():
+            while remove_iter:
                 email = remove_iter.popleft()
                 try:
                     resp = slack.users.admin.setInactive(userids_by_email[email])
