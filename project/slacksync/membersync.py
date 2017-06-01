@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import collections
 import logging
 import time
 
@@ -27,7 +28,7 @@ class SlackMemberSync(object):
             emails.append((member['id'], member['name'], member['profile']['email']))
         return emails
 
-    def sync_members(self, autodeactivate=False):
+    def sync_members(self, autodeactivate=False, resend=True):
         """Sync members, NOTE: https://github.com/ErikKalkoken/slackApiDoc/blob/master/users.admin.setInactive.md says 
         deactivation via API works only on paid tiers"""
         if not api_configured():
@@ -36,15 +37,25 @@ class SlackMemberSync(object):
             slack = get_client(session=session)
             slack_users = self.get_slack_users_simple(slack)
             slack_emails = set([x[2] for x in slack_users])
-            add_members = Member.objects.exclude(email__in=slack_emails)
-            for member in add_members:
+            add_members = collections.deque(Member.objects.exclude(email__in=slack_emails))
+
+            while add_members:
+                member = add_members.popleft()
                 try:
-                    resp = slack.users.admin.invite(member.email)
+                    resp = slack.users.admin.invite(member.email, resend=resend)
                     if 'ok' not in resp.body or not resp.body['ok']:
                         self.logger.error("Could not invite {}, response: {}".format(member.email, resp.body))
-                    time.sleep(0.1)  # rate-limit
+                    time.sleep(0.25)  # rate-limit
                 except Exception as e:
-                    logger.exception("Got exception when trying to invite {}".format(member.email))
+                    if 'Retry-After' in e.response.headers:
+                        wait_s = int(e.response.headers['Retry-After'])
+                        logger.warning("Asked to wait {}s".format(wait_s))
+                        time.sleep(wait_s)
+                        add_members.appendleft(member)
+                        continue
+                    else:
+                        logger.exception("Got exception when trying to invite {}".format(member.email))
+                        raise e
 
             member_emails = set(Member.objects.values_list('email', flat=True))
             remove_slack_emails = slack_emails - member_emails
@@ -59,14 +70,23 @@ class SlackMemberSync(object):
                 return remove_usernames
 
             userids_by_email = {x[2]: x[0] for x in slack_users}
-            for email in remove_slack_emails:
+            remove_iter = collections.deque(remove_slack_emails)
+            while remove_iter:
+                email = remove_iter.popleft()
                 try:
                     resp = slack.users.admin.setInactive(userids_by_email[email])
                     if 'ok' not in resp.body or not resp.body['ok']:
-                        self.logger.error(
-                            "Could not deactivate {}, response: {}".format(email, resp.body))
-                    time.sleep(0.1)  # rate-limit
+                        self.logger.error("Could not deactivate {}, response: {}".format(email, resp.body))
+                    time.sleep(0.25)  # rate-limit
                 except Exception as e:
-                    logger.exception("Got exception when trying to deactivate {}".format(email))
+                    if 'Retry-After' in e.response.headers:
+                        wait_s = int(e.response.headers['Retry-After'])
+                        logger.warning("Asked to wait {}s".format(wait_s))
+                        time.sleep(wait_s)
+                        remove_iter.appendleft(email)
+                        continue
+                    else:
+                        logger.exception("Got exception when trying to deactivate {}".format(email))
+                        raise e
 
             return remove_usernames
