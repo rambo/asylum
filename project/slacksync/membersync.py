@@ -19,7 +19,7 @@ class SlackMemberSync(object):
         response = slack.users.list()
         emails = []
         for member in response.body['members']:
-            if 'email' not in memeber['profile']:
+            if 'email' not in member['profile']:
                 # bot or similar
                 continue
             if exclude_api_user and member['name'] == settings.SLACK_API_USERNAME:
@@ -41,7 +41,7 @@ class SlackMemberSync(object):
                 try:
                     resp = slack.users.admin.invite(member.email)
                     if 'ok' not in resp.body or not resp.body['ok']:
-                        self.logger.error("Could not invite {}, response: {}".format(member.email, response.body))
+                        self.logger.error("Could not invite {}, response: {}".format(member.email, resp.body))
                     time.sleep(0.1)  # rate-limit
                 except Exception as e:
                     logger.exception("Got exception when trying to invite {}".format(member.email))
@@ -64,7 +64,7 @@ class SlackMemberSync(object):
                     resp = slack.users.admin.setInactive(userids_by_email[email])
                     if 'ok' not in resp.body or not resp.body['ok']:
                         self.logger.error(
-                            "Could not deactivate {}, response: {}".format(email, response.body))
+                            "Could not deactivate {}, response: {}".format(email, resp.body))
                     time.sleep(0.1)  # rate-limit
                 except Exception as e:
                     logger.exception("Got exception when trying to deactivate {}".format(email))
