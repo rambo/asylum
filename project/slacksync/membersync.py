@@ -3,11 +3,11 @@ import collections
 import logging
 import time
 
+import slacker
 from django.conf import settings
 from members.models import Member
-from requests.sessions import Session
 from requests.exceptions import RequestException
-import slacker
+from requests.sessions import Session
 
 from .utils import api_configured, get_client
 
@@ -51,12 +51,15 @@ class SlackMemberSync(object):
                 except slacker.Error as e:
                     if str(e) == 'sent_recently':
                         continue
+                    if str(e) == 'invalid_email':
+                        logger.error("Slack says {} is invalid_email".format(member.email))
+                        continue
                     raise e
                 except RequestException as e:
                     if 'Retry-After' in e.response.headers:
                         wait_s = int(e.response.headers['Retry-After'])
                         logger.warning("Asked to wait {}s before retrying invite for {}".format(wait_s, member.email))
-                        time.sleep(wait_s*1.5)
+                        time.sleep(wait_s * 1.5)
                         add_members.append(member)
                         continue
                     else:
@@ -88,7 +91,7 @@ class SlackMemberSync(object):
                     if 'Retry-After' in e.response.headers:
                         wait_s = int(e.response.headers['Retry-After'])
                         logger.warning("Asked to wait {}s before retrying deactivation for {}".format(wait_s, email))
-                        time.sleep(wait_s*1.5)
+                        time.sleep(wait_s * 1.5)
                         remove_iter.append(email)
                         continue
                     else:
