@@ -18,8 +18,8 @@ class Command(BaseCommand):
         autoremove = False
         if options['autodeactivate']:
             autoremove = True
-        sync = SlackMemberSync(autoremove)
-        tbd = sync.sync_members()
+        sync = SlackMemberSync()
+        tbd = sync.sync_members(autoremove)
         if options['verbosity'] > 1:
             for dm in tbd:
                 if autoremove:
