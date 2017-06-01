@@ -41,3 +41,4 @@ django-markdown==0.8.4
 django-settings-export==1.2.1
 holviapi==0.2.20170129
 python-dateutil==2.6.0
+slacker==0.9.50

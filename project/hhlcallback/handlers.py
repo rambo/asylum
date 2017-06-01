@@ -12,6 +12,7 @@ from django.utils.translation import ugettext_lazy as _
 from examples.utils import get_holvi_singleton
 from holviapi.utils import barcode as bank_barcode
 from members.handlers import BaseApplicationHandler, BaseMemberHandler
+from slacksync.utils import quick_invite
 
 from .utils import get_nordea_payment_reference
 
@@ -76,6 +77,9 @@ class ApplicationHandler(BaseApplicationHandler):
             mail.body = 'subscribe'
             mail.send()
 
+        # Invite to Slack
+        quick_invite(member.email)
+
         # Welcome-email
         mail = EmailMessage()
         mail.to = [member.email, ]
@@ -85,7 +89,10 @@ class ApplicationHandler(BaseApplicationHandler):
 
 Jäsenenä olet tervetullut kaikkiin Helsinki Hacklabin tilaisuuksiin, kuten tiistaisiin jäseniltoihin, torstaisiin kurssipäiviin, sekä muihin järjestettäviin tapahtumiin.
 
-Sähköisesti hacklabilaisten kanssa voi keskustella Suomen hacklabien foorumilla (https://discourse.hacklab.fi/), sekä IRC kanavallamme #helsinki.hacklab.fi Freenode-verkossa.
+Sinulle lähetetään erillinen kutsu Helsinki Hacklabin omaan Slack-ryhmään. Slackissa on jäsenten yleinen keskustelu ja omia kanaviaan eri aihealueista.
+Lisätietoja kanavista, boteista, yms Wikissä: http://wiki.helsinki.hacklab.fi/Slack
+
+Hacklabien yhteisellä foorumilla https://discourse.hacklab.fi/ pääset keskustelemaan sekä muiden jäsenten että kaikkien Suomen hacklabien kanssa. Kaikille avoin IRC-kanavamme #helsinki.hacklab.fi löytyy Freenode-verkosta.
 
 {fee_msg_fi}
 
@@ -97,7 +104,10 @@ Helsinki Hacklab welcomes you as a member!
 
 As a member you are most welcome to attend all events organised by Helsinki Hacklab. These include the weekly member gathering every Tuesday, our courses and workshops held on Thurdays and other events we might come up with.
 
-Electronic communication between our members is handled forum of finnish hacklabs (https://discourse.hacklab.fi/) and on our IRC channel #helsinki.hacklab.fi @ Freenode.
+You will receive a separate invitation to Helsinki Hacklab Slack group. Slack has general chat for members and more channels for specific topics.
+More information about channels, bots, etc in our Wiki: http://wiki.helsinki.hacklab.fi/Slack
+
+You can reach our members and all Finnish Hackerspaces in our shared forum https://discourse.hacklab.fi/. Our public IRC channel #helsinki.hacklab.fi can be found in Freenode network.
 
 {fee_msg_en}
 
