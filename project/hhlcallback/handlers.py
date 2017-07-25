@@ -213,7 +213,7 @@ Amount due: {sum}EUR
 Due date: Choose a date that suits you, preferably early in the first half of the month.
 Repeat payment: Monthly
 
-This payment information is valid until further notice, you will be send notification of changes.
+This payment information is valid until further notice, you will be sent notification of changes.
         """.format(
             iban=iban,
             ref=t.reference,
