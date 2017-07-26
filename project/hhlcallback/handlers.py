@@ -13,6 +13,7 @@ from examples.utils import get_holvi_singleton
 from holviapi.utils import barcode as bank_barcode
 from members.handlers import BaseApplicationHandler, BaseMemberHandler
 from slacksync.utils import quick_invite
+from django.conf import settings
 
 from .utils import get_nordea_payment_reference
 
@@ -89,10 +90,12 @@ class ApplicationHandler(BaseApplicationHandler):
 
 Jäsenenä olet tervetullut kaikkiin Helsinki Hacklabin tilaisuuksiin, kuten tiistaisiin jäseniltoihin, torstaisiin kurssipäiviin, sekä muihin järjestettäviin tapahtumiin.
 
-Sinulle lähetetään erillinen kutsu Helsinki Hacklabin omaan Slack-ryhmään. Slackissa on jäsenten yleinen keskustelu ja omia kanaviaan eri aihealueista.
+Käytä alla olevaa linkkiä liittyäksesi Helsinki Hacklabin omaan Slack-ryhmään. Slackissa on jäsenten yleinen keskustelu ja omia kanaviaan eri aihealueista.
 Lisätietoja kanavista, boteista, yms Wikissä: http://wiki.helsinki.hacklab.fi/Slack
 
-Hacklabien yhteisellä foorumilla https://discourse.hacklab.fi/ pääset keskustelemaan sekä muiden jäsenten että kaikkien Suomen hacklabien kanssa. Kaikille avoin IRC-kanavamme #helsinki.hacklab.fi löytyy Freenode-verkosta.
+{slacklink}
+
+Hacklabien yhteisellä foorumilla https://discourse.hacklab.fi/ pääset keskustelemaan sekä muiden jäsenten että kaikkien Suomen hacklabien kanssa.
 
 {fee_msg_fi}
 
@@ -104,16 +107,18 @@ Helsinki Hacklab welcomes you as a member!
 
 As a member you are most welcome to attend all events organised by Helsinki Hacklab. These include the weekly member gathering every Tuesday, our courses and workshops held on Thurdays and other events we might come up with.
 
-You will receive a separate invitation to Helsinki Hacklab Slack group. Slack has general chat for members and more channels for specific topics.
+Use the link below to join the Helsinki Hacklab Slack group. Slack has general chat for members and more channels for specific topics.
 More information about channels, bots, etc in our Wiki: http://wiki.helsinki.hacklab.fi/Slack
 
-You can reach our members and all Finnish Hackerspaces in our shared forum https://discourse.hacklab.fi/. Our public IRC channel #helsinki.hacklab.fi can be found in Freenode network.
+{slacklink}
+
+You can reach our members and all Finnish Hackerspaces in our shared forum https://discourse.hacklab.fi/.
 
 {fee_msg_en}
 
 For questions regarding your membership or this message, please contact the board of Helsinki Hacklab at hallitus@helsinki.hacklab.fi or simply reply to this message.
 
-""".format(fee_msg_fi=fee_msg_fi, fee_msg_en=fee_msg_en)
+""".format(fee_msg_fi=fee_msg_fi, fee_msg_en=fee_msg_en, slacklink=settings.SLACK_INIVTE_LINK)
         mail.send()
 
 
@@ -208,7 +213,7 @@ Amount due: {sum}EUR
 Due date: Choose a date that suits you, preferably early in the first half of the month.
 Repeat payment: Monthly
 
-This payment information is valid until further notice, you will be send notification of changes.
+This payment information is valid until further notice, you will be sent notification of changes.
         """.format(
             iban=iban,
             ref=t.reference,

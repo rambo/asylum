@@ -5,6 +5,7 @@ import time
 
 import slacker
 from django.conf import settings
+from django.core.mail import send_mail
 from members.models import Member
 from requests.exceptions import RequestException
 from requests.sessions import Session
@@ -30,8 +31,17 @@ class SlackMemberSync(object):
             emails.append((member['id'], member['name'], member['profile']['email']))
         return emails
 
+    def email_slack_link(self, member):
+        send_mail(
+            "Slack invite to {}".format(settings.ORGANIZATION_NAME),
+            "Click on the link to continue\n\n{}\n".format(settings.SLACK_INVITE_LINK),
+            settings.DEFAULT_FROM_EMAIL,
+            [member.email],
+            fail_silently=True
+        )
+
     def sync_members(self, autodeactivate=False, resend=True):
-        """Sync members, NOTE: https://github.com/ErikKalkoken/slackApiDoc/blob/master/users.admin.setInactive.md says 
+        """Sync members, NOTE: https://github.com/ErikKalkoken/slackApiDoc/blob/master/users.admin.setInactive.md says
         deactivation via API works only on paid tiers"""
         if not api_configured():
             raise RuntimeError("Slack API not configured")
@@ -43,6 +53,10 @@ class SlackMemberSync(object):
 
             while add_members:
                 member = add_members.popleft()
+                # If we have configured invite-link use it instead of API (which might hit the "too many invites" -error
+                if settings.SLACK_INVITE_LINK:
+                    self.email_slack_link(member)
+                    continue
                 try:
                     resp = slack.users.admin.invite(member.email, resend=resend)
                     if 'ok' not in resp.body or not resp.body['ok']:
