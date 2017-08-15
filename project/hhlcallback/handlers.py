@@ -118,7 +118,7 @@ You can reach our members and all Finnish Hackerspaces in our shared forum https
 
 For questions regarding your membership or this message, please contact the board of Helsinki Hacklab at hallitus@helsinki.hacklab.fi or simply reply to this message.
 
-""".format(fee_msg_fi=fee_msg_fi, fee_msg_en=fee_msg_en, slacklink=settings.SLACK_INIVTE_LINK)
+""".format(fee_msg_fi=fee_msg_fi, fee_msg_en=fee_msg_en, slacklink=settings.SLACK_INVITE_LINK)
         mail.send()
 
 
