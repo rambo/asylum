@@ -101,6 +101,7 @@ FIXTURE_DIRS = []
 
 # EMAIL CONFIGURATION
 # ------------------------------------------------------------------------------
+DEFAULT_FROM_EMAIL = env('DJANGO_DEFAULT_FROM_EMAIL', default='asylum <noreply@example.com>')
 EMAIL_BACKEND = env('DJANGO_EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
 
 # MANAGER CONFIGURATION
@@ -271,7 +272,11 @@ HOLVI_APIKEY = env('HOLVI_APIKEY', default=None)
 HOLVI_BARCODE_IBAN = env('HOLVI_BARCODE_IBAN', default=None)
 HOLVI_NOTIFICATION_INTERVAL_DAYS = env('HOLVI_NOTIFICATION_INTERVAL_DAYS', default=7)
 NORDEA_BARCODE_IBAN = env('NORDEA_BARCODE_IBAN', default=None)
-
+SLACK_APIKEY = env('SLACK_APIKEY', default=None)
+SLACK_API_USERNAME = env('SLACK_API_USERNAME', default=None)
+SLACK_INVITE_LINK = env('SLACK_INVITE_LINK', default=None)
+VELKOJA_FROM_EMAIL = env('VELKOJA_FROM_EMAIL', default=DEFAULT_FROM_EMAIL)
+VELKOJA_CC_EMAIL = env('VELKOJA_CC_EMAIL', default=VELKOJA_FROM_EMAIL)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
