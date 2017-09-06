@@ -79,7 +79,8 @@ class ApplicationHandler(BaseApplicationHandler):
             mail.send()
 
         # Invite to Slack
-        quick_invite(member.email)
+        # Done with the shared invite in the welcome-email
+        #quick_invite(member.email)
 
         # Welcome-email
         mail = EmailMessage()
