@@ -25,7 +25,7 @@ def quick_invite(email):
         return False
     slack = get_client()
     try:
-        resp = slack.users.admin.invite(member.email)
+        resp = slack.users.admin.invite(email)
         if 'ok' not in resp.body or not resp.body['ok']:
             self.logger.error("Could not invite {}, response: {}".format(email, response.body))
             return False
