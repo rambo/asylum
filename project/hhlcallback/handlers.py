@@ -264,6 +264,7 @@ class TransactionHandler(BaseTransactionHandler):
         self.try_methods = [
             self.import_generic_transaction,
             self.import_legacy_transaction,
+            self.import_holvi_overpaid_transaction,
         ]
         super().__init__(*args, **kwargs)
 
@@ -294,6 +295,24 @@ class TransactionHandler(BaseTransactionHandler):
         lt.tag = base.tag
         lt.owner = base.owner
         lt.save()
+        return lt
+
+    def import_holvi_overpaid_transaction(self, at, lt):
+        """Look for a transaction with same reference but opposite same or lesser value. If found use that for owner and tag"""
+        if len(at.reference) < 2:  # Jus so we do not get indexerrors from empty references or something
+            return None
+        if at.reference[0:2] != "RF":
+            return None
+        qs = Transaction.objects.filter(reference=at.reference, amount__gte=-at.amount).order_by('-stamp')
+        if not qs.count():
+            return None
+        base = qs[0]
+        lt.tag = base.tag
+        lt.owner = base.owner
+        lt.save()
+        if base.amount >= -at.amount:
+            base.amount = -at.amount
+            base.save()
         return lt
 
     def import_legacy_transaction(self, at, lt):
