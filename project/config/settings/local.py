@@ -24,7 +24,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY", default='CHANGEME!!!s1+ggf&2lnb3hez!b+h@ea
 # Mail settings
 # ------------------------------------------------------------------------------
 EMAIL_HOST = 'localhost'
-EMAIL_PORT = 1025 # Maildump
+EMAIL_PORT = 1025  # Maildump
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 

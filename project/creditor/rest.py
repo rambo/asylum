@@ -32,6 +32,7 @@ class TransactionSerializer(serializers.HyperlinkedModelSerializer):
         model = Transaction
         fields = '__all__'
 
+
 class TransactionFilter(filters.FilterSet):
 
     class Meta:
