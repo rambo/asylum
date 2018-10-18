@@ -6,7 +6,7 @@ EXPOSE 8000
 RUN apt-get update && apt-get upgrade -y && apt-get install -y curl sudo
 RUN curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash
 RUN apt-get install -y build-essential postgresql \
-    git python-dev python3-dev python-virtualenv \
+    git python-dev python3-dev python-docutils python3-docutils python-virtualenv \
     python3-pip python-pip graphviz-dev libpq-dev nodejs
 
 # Install maildump

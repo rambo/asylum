@@ -6,6 +6,7 @@ import logging
 import environ
 from creditor.handlers import BaseRecurringTransactionsHandler, BaseTransactionHandler
 from creditor.models import Transaction, TransactionTag
+from django.conf import settings
 from django.core.mail import EmailMessage
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -13,7 +14,6 @@ from examples.utils import get_holvi_singleton
 from holviapi.utils import barcode as bank_barcode
 from members.handlers import BaseApplicationHandler, BaseMemberHandler
 from slacksync.utils import quick_invite
-from django.conf import settings
 
 from .utils import get_nordea_payment_reference
 
@@ -80,7 +80,7 @@ class ApplicationHandler(BaseApplicationHandler):
 
         # Invite to Slack
         # Done with the shared invite in the welcome-email
-        #quick_invite(member.email)
+        # quick_invite(member.email)
 
         # Welcome-email
         mail = EmailMessage()
@@ -156,7 +156,7 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
     def send_keyholder_fee_email(self, rt, t):
         t.reference = get_nordea_payment_reference(t.owner.member_id, int(t.tag.tmatch))
         # Skip sending if this is not the first transaction with this sum
-        if not self.is_first_keyholder_email(rt,t):
+        if not self.is_first_keyholder_email(rt, t):
             return True
 
         iban = env('NORDEA_BARCODE_IBAN')

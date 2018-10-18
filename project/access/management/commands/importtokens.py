@@ -2,9 +2,10 @@
 
 import csv
 
+from access.models import AccessType, Grant, Token, TokenType
 from django.core.management.base import BaseCommand, CommandError
-from access.models import Token, AccessType, Grant, TokenType
 from members.models import Member
+
 
 class Command(BaseCommand):
     help = 'Exports tokens and their access controls to sqlite file'
@@ -16,11 +17,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         ttype = TokenType.objects.get(pk=int(options['tokentype']))
-        atype_ids = [ int(x) for x in options['accessids'].split(',') ]
+        atype_ids = [int(x) for x in options['accessids'].split(',')]
         grant_atypes = AccessType.objects.filter(pk__in=atype_ids)
 
         with open(options['filepath'], 'rt') as fp:
-            reader =  csv.reader(fp, delimiter=";")
+            reader = csv.reader(fp, delimiter=";")
             i = 0
             for row in reader:
                 i += 1
