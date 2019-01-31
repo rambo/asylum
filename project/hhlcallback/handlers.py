@@ -4,14 +4,15 @@ import datetime
 import logging
 
 import environ
+import holvirc
 from creditor.handlers import BaseRecurringTransactionsHandler, BaseTransactionHandler
 from creditor.models import Transaction, TransactionTag
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
-from examples.utils import get_holvi_singleton
 from holviapi.utils import barcode as bank_barcode
+from holviapp.utils import get_connection as get_holvi_connection
 from members.handlers import BaseApplicationHandler, BaseMemberHandler
 from slacksync.utils import quick_invite
 
@@ -128,10 +129,9 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        HOLVI_CNC = get_holvi_singleton()
+        HOLVI_CNC = get_holvi_connection()
         if HOLVI_CNC:
-            import holviapi
-            caa = holviapi.CategoriesAPI(HOLVI_CNC)
+            caa = holvirc.CategoriesAPI(HOLVI_CNC)
             self.category_maps = {  # Keyed by tag pk
                 1: caa.get_category('101ea72cbfadf52d4f7684a52bdb8947'),  # Membership feee
                 2: caa.get_category('7ac3020b14d926e5f0c6fb005f0457ac'),  # Keyholder fee
@@ -229,18 +229,17 @@ This payment information is valid until further notice, you will be sent notific
         return True
 
     def make_membershipfee_invoice(self, rt, t):
-        HOLVI_CNC = get_holvi_singleton()
+        HOLVI_CNC = get_holvi_connection()
         if not HOLVI_CNC:
             return True
 
-        import holviapi
-        invoice_api = holviapi.InvoiceAPI(HOLVI_CNC)
-        invoice = holviapi.Invoice(invoice_api)
-        invoice.receiver = holviapi.contacts.InvoiceContact({
+        invoice_api = holvirc.InvoiceAPI(HOLVI_CNC)
+        invoice = holvirc.Invoice(invoice_api)
+        invoice.receiver = holvirc.contacts.InvoiceContact({
             'email': t.owner.email,
             'name': t.owner.name,
         })
-        invoice.items.append(holviapi.InvoiceItem(invoice))
+        invoice.items.append(holvirc.InvoiceItem(invoice))
         if t.stamp:
             year = t.stamp.year
         else:
