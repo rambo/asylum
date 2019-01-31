@@ -9,7 +9,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--autodeactivate', action='store_true', help='Automatically deactivate users that are no longer members')
-        parser.add_argument('--noresend', action='store_true', help='Automatically deactivate users that are no longer members')
+        parser.add_argument('--noresend', action='store_true', help='Do not resend the invitation mail')
 
         pass
 
