@@ -235,7 +235,7 @@ This payment information is valid until further notice, you will be sent notific
 
         invoice_api = holvirc.InvoiceAPI(HOLVI_CNC)
         invoice = holvirc.Invoice(invoice_api)
-        invoice.receiver = holvirc.contacts.InvoiceContact({
+        invoice.receiver = holvirc.InvoiceContact({
             'email': t.owner.email,
             'name': t.owner.name,
         })
