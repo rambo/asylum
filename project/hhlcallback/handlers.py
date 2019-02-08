@@ -15,12 +15,14 @@ from holviapi.utils import barcode as bank_barcode
 from holviapp.utils import get_connection as get_holvi_connection
 from members.handlers import BaseApplicationHandler, BaseMemberHandler
 from slacksync.utils import quick_invite
+from django.core.mail import get_connection
 
 from .utils import get_nordea_payment_reference
 
-logger = logging.getLogger('hhlcallback.handlers')
-env = environ.Env()
+LOGGER = logging.getLogger('hhlcallback.handlers')
+ENV = environ.Env()
 
+LOCAL_SMTP_CONNECTION = get_connection('django.core.mail.backends.smtp.EmailBackend')
 
 class ApplicationHandler(BaseApplicationHandler):
     fresh_emails = {}
@@ -35,7 +37,7 @@ class ApplicationHandler(BaseApplicationHandler):
         if instance.email in self.fresh_emails:
             # Just created
             del(self.fresh_emails[instance.email])
-            mail = EmailMessage()
+            mail = EmailMessage(connection=LOCAL_SMTP_CONNECTION)
             mail.from_email = '"%s" <%s>' % (instance.name, instance.email)
             mail.to = ["hallitus@helsinki.hacklab.fi", ]
             mail.subject = "Jäsenhakemus: %s" % instance.name
@@ -54,7 +56,7 @@ class ApplicationHandler(BaseApplicationHandler):
             fee_msg_en = "Membership fee for year %s has been waived." % application.received.year
 
         # Auto-add the membership fee as recurring transaction
-        membership_fee = env.float('HHL_MEMBERSHIP_FEE', default=None)
+        membership_fee = ENV.float('HHL_MEMBERSHIP_FEE', default=None)
         membership_tag = 1
         if membership_fee and membership_tag:
             from creditor.models import RecurringTransaction, TransactionTag
@@ -70,9 +72,9 @@ class ApplicationHandler(BaseApplicationHandler):
             rt.conditional_add_transaction()
 
         # Subscribe to mailing list
-        mailman_subscribe = env('HHL_MAILMAN_SUBSCRIBE', default=None)
+        mailman_subscribe = ENV('HHL_MAILMAN_SUBSCRIBE', default=None)
         if mailman_subscribe:
-            mail = EmailMessage()
+            mail = EmailMessage(connection=LOCAL_SMTP_CONNECTION)
             mail.from_email = member.email
             mail.to = [mailman_subscribe, ]
             mail.subject = 'subscribe'
@@ -159,7 +161,7 @@ class RecurringTransactionsHolviHandler(BaseRecurringTransactionsHandler):
         if not self.is_first_keyholder_email(rt, t):
             return True
 
-        iban = env('NORDEA_BARCODE_IBAN')
+        iban = ENV('NORDEA_BARCODE_IBAN')
         member = t.owner
         mail = EmailMessage()
         mail.to = [member.email, ]
@@ -224,7 +226,7 @@ This payment information is valid until further notice, you will be sent notific
         try:
             mail.send()
         except Exception as e:
-            logger.exception("Failed to send payment-info email to {}".format(member.email))
+            LOGGER.exception("Failed to send payment-info email to {}".format(member.email))
 
         return True
 
