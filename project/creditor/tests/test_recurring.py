@@ -44,12 +44,13 @@ def month_start_end(timescope=None):
 def test_yearly_in_scope_with_end():
     now = timezone.now()
     start, end = year_start_end(now)
-    t = MembershipfeeFactory(start=start, end=end)
-    assert t.in_timescope(now)
-    ret1 = t.conditional_add_transaction(now)
-    assert ret1
-    ret2 = t.conditional_add_transaction(now)
-    assert not ret2
+    for x in range(5):
+        t = MembershipfeeFactory(start=start, end=end)
+        assert t.in_timescope(now)
+        ret1 = t.conditional_add_transaction(now)
+        assert ret1
+        ret2 = t.conditional_add_transaction(now)
+        assert not ret2
 
 
 @pytest.mark.django_db
@@ -57,12 +58,13 @@ def test_yearly_in_scope_without_end():
     now = timezone.now()
     start, end = year_start_end(now - datetime.timedelta(weeks=60))
     end = None
-    t = MembershipfeeFactory(start=start, end=end)
-    assert t.in_timescope(now)
-    ret1 = t.conditional_add_transaction(now)
-    assert ret1
-    ret2 = t.conditional_add_transaction(now)
-    assert not ret2
+    for x in range(5):
+        t = MembershipfeeFactory(start=start, end=end)
+        assert t.in_timescope(now)
+        ret1 = t.conditional_add_transaction(now)
+        assert ret1
+        ret2 = t.conditional_add_transaction(now)
+        assert not ret2
 
 
 @pytest.mark.django_db
