@@ -128,15 +128,19 @@ class RecurringTransaction(AsylumModel):
 
         return (self.start <= scope_end
                 and (not self.end
-                     or self.end >= scope_end))
+                     or self.end >= scope_start))
 
     @transaction.atomic()
     def transaction_exists(self, timescope=None):
         start, end = self.resolve_timescope(timescope)
         uid_source = self.make_uid_source(timescope)
         uid = hashlib.sha1(uid_source.encode('UTF-8')).hexdigest()
+        # Check for uid match
+        if Transaction.objects.filter(unique_id=uid).count():
+            return True
+        # check for time based match
         qs = Transaction.objects.filter(
-            owner=self.owner, tag=self.tag, unique_id=uid, stamp__gte=start, stamp__lte=end
+            owner=self.owner, tag=self.tag, stamp__gte=start, stamp__lte=end
         )
         if qs.count():
             return True
